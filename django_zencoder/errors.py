@@ -1,0 +1,2 @@
+class ZencoderError(Exception):
+    pass
