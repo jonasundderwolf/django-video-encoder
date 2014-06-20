@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding model 'Format'
-        db.create_table(u'zencoder_format', (
+        db.create_table(u'django_zencoder_format', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('object_id', self.gf('django.db.models.fields.PositiveIntegerField')()),
             ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
@@ -26,7 +26,7 @@ class Migration(SchemaMigration):
 
     def backwards(self, orm):
         # Deleting model 'Format'
-        db.delete_table(u'zencoder_format')
+        db.delete_table(u'django_zencoder_format')
 
 
     models = {
@@ -37,7 +37,7 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        u'zencoder.format': {
+        u'django_zencoder.format': {
             'Meta': {'object_name': 'Format'},
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
             'duration': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True'}),
@@ -52,4 +52,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['zencoder']
+    complete_apps = ['django_zencoder']
