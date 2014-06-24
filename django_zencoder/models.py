@@ -9,6 +9,7 @@ from .api import encode, get_video
 
 ZENCODER_MODELS = {}
 
+
 class FormatManager(models.Manager):
     def get_for(self, obj, field_name, format, create=False):
         try:
@@ -54,7 +55,7 @@ class Format(models.Model):
 
 
 def detect_file_changes(sender, instance, **kwargs):
-    field = ZENCODER_MODELS.get(sender)
+    field = ZENCODER_MODELS.get('%s.%s' % (sender._meta.app_label, sender._meta.model_name))
     if field and hasattr(getattr(instance, field), 'file') and isinstance(
             getattr(instance, field).file, UploadedFile):
         if hasattr(instance, '_zencoder_updates'):
@@ -70,7 +71,7 @@ def trigger_encoding(sender, instance, **kwargs):
 
 if getattr(settings, 'ZENCODER_MODELS', None):
     for name in settings.ZENCODER_MODELS:
-        app, model, field = name.split('.')
-        ZENCODER_MODELS[models.loading.get_model(app, model)] = field
+        app_model, field = name.rsplit('.', 1)
+        ZENCODER_MODELS[app_model.lower()] = field
     models.signals.pre_save.connect(detect_file_changes)
     models.signals.post_save.connect(trigger_encoding)
