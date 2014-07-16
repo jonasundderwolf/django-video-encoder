@@ -36,9 +36,9 @@ def send_request(data):
 
 def encode(obj, field_name, file_url=None):
     from .models import Format
+
     def absolute_url(url):
         domain = Site.objects.get_current().domain
-        domain = '694862d6.ngrok.com'
         return url if '://' in url else 'http://%s%s' % (domain, url)
 
     if not file_url:
@@ -88,5 +88,5 @@ def get_video(format, data):
         os.unlink(filename)
     elif output['state'] == 'failed':
         logger.warning('Error in format %s for video %s: %s',
-                       format.id, format.content_type, format.object_id, format.field_name,
-                       output['error_message'])
+                       format.id, format.content_type, format.object_id,
+                       format.field_name, output['error_message'])
