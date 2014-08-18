@@ -39,9 +39,8 @@ class Format(models.Model):
 
     format = models.CharField(max_length=255, choices=[
         (f['label'], f['label']) for f in settings.ZENCODER_FORMATS])
-    file = models.FileField(upload_to=lambda i, f: 'formats/%s/%s%s' % (
-        i.format, splitext(basename(getattr(i.video, i.field_name).path))[0],
-        splitext(f)[1]), max_length=2048)
+    file = models.FileField(upload_to=lambda i, f: 'formats/%s/%s' % (
+        i.format, getattr(i.video, i.field_name).name), max_length=2048)
     width = models.PositiveIntegerField('Width', null=True)
     height = models.PositiveIntegerField('Height', null=True)
     duration = models.PositiveIntegerField('Duration (ms)', null=True)
