@@ -1,4 +1,3 @@
-from os.path import splitext, basename
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
