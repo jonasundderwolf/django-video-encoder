@@ -4,30 +4,9 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from .api import encode, get_video
 
 
 ZENCODER_MODELS = {}
-
-
-class FormatManager(models.Manager):
-    def get_for(self, obj, field_name, format, create=False):
-        try:
-            return Format.objects.get(
-                content_type=ContentType.objects.get_for_model(obj._meta.model),
-                object_id=obj.pk,
-                field_name=field_name,
-                format=format)
-        except Format.DoesNotExist:
-            if create:
-                return Format.objects.create(
-                    content_type=ContentType.objects.get_for_model(obj._meta.model),
-                    object_id=obj.pk,
-                    field_name=field_name,
-                    format=format)
-
-    def encode_for(self, obj, field_name):
-        encode(obj, field_name)
 
 
 class Format(models.Model):
@@ -50,11 +29,6 @@ class Format(models.Model):
     duration = models.PositiveIntegerField('Duration (ms)', null=True)
 
     extra_info = models.TextField('Zencoder information (JSON)', blank=True)
-
-    objects = FormatManager()
-
-    def get_video(self, post_data):
-        get_video(self, post_data)
 
 
 def detect_file_changes(sender, instance, **kwargs):
