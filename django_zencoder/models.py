@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from .api import encode
 
 
 ZENCODER_MODELS = {}
@@ -43,7 +44,7 @@ def detect_file_changes(sender, instance, **kwargs):
 
 def trigger_encoding(sender, instance, **kwargs):
     for field in getattr(instance, '_zencoder_updates', ()):
-        Format.objects.encode_for(instance, field)
+        encode(instance, field)
 
 
 if getattr(settings, 'ZENCODER_MODELS', None):
