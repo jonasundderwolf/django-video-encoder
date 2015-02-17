@@ -75,6 +75,7 @@ def encode(obj, field_name, file_url=None):
         "input": absolute_url(file_url),
         "region": getattr(settings, 'ZENCODER_REGION', "europe"),
         "output": outputs,
+        "test": getattr(settings, 'ZENCODER_INTEGRATION_MODE', False),
     }
     try:
         result = send_request(data)
