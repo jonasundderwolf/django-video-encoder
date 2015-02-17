@@ -39,7 +39,9 @@ def encode(obj, field_name, file_url=None):
 
     def absolute_url(url):
         domain = Site.objects.get_current().domain
-        return url if '://' in url else 'http://%s%s' % (domain, url)
+        protocol = 'https' if getattr(
+            settings, 'ZENCODER_NOTIFICATION_SSL', False) else 'http'
+        return url if '://' in url else '%s://%s%s' % (protocol, domain, url)
 
     if not file_url:
         file_url = getattr(obj, field_name).url
