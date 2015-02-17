@@ -97,7 +97,7 @@ def get_video(content_type_id, object_id, field_name, data):
     if output['state'] == 'finished':
         from .models import Format
 
-        fmt = Format.objects.get_or_create(
+        fmt, __ = Format.objects.get_or_create(
             content_type=content_type,
             object_id=object_id,
             field_name=field_name,
