@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.utils.text import slugify
 from .api import encode
 
 
@@ -22,8 +23,8 @@ class Format(models.Model):
     file = models.FileField(
         upload_to=lambda i, f: 'formats/%s/%s%s' % (
             i.format,
-            splitext(getattr(i.video, i.field_name).name)[0],
-            splitext(f)[1]),
+            slugify(splitext(getattr(i.video, i.field_name).name)[0]),
+            splitext(f)[1].lower()),
         max_length=2048)
     width = models.PositiveIntegerField('Width', null=True)
     height = models.PositiveIntegerField('Height', null=True)
