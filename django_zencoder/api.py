@@ -115,6 +115,5 @@ def get_video(content_type_id, object_id, field_name, data):
         os.unlink(filename)
 
     elif output['state'] == 'failed':
-        logger.warning('Error in format %s for video %s: %s',
-                       fmt.id, fmt.content_type, fmt.object_id,
-                       fmt.field_name, output['error_message'])
+        logger.warning('Zencoder error for %s/%s/%s: %s',
+                       content_type, object_id, field_name, output['error_message'])
