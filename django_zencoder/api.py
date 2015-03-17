@@ -116,5 +116,5 @@ def get_video(content_type_id, object_id, field_name, data):
 
     elif output['state'] == 'failed':
         logger.warning('Error in format %s for video %s: %s',
-                       format.id, format.content_type, format.object_id,
-                       format.field_name, output['error_message'])
+                       fmt.id, fmt.content_type, fmt.object_id,
+                       fmt.field_name, output['error_message'])
