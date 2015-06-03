@@ -1,4 +1,4 @@
-from os.path import splitext
+import os.path
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
@@ -11,6 +11,16 @@ from .api import encode
 ZENCODER_MODELS = {}
 
 
+def format_upload_to(instance, filename):
+    dirname, original_filename = os.path.split(
+        getattr(instance.video, instance.field_name).name)
+    return 'formats/%s/%s/%s%s' % (
+        instance.format,
+        dirname,
+        slugify(os.path.splitext(original_filename)[0]),
+        os.path.splitext(filename)[1].lower()),
+
+
 class Format(models.Model):
     object_id = models.PositiveIntegerField()
     content_type = models.ForeignKey(ContentType)
@@ -20,12 +30,7 @@ class Format(models.Model):
 
     format = models.CharField(max_length=255, choices=[
         (f['label'], f['label']) for f in settings.ZENCODER_FORMATS])
-    file = models.FileField(
-        upload_to=lambda i, f: 'formats/%s/%s%s' % (
-            i.format,
-            slugify(splitext(getattr(i.video, i.field_name).name)[0]),
-            splitext(f)[1].lower()),
-        max_length=2048)
+    file = models.FileField(upload_to=format_upload_to, max_length=2048)
     width = models.PositiveIntegerField('Width', null=True)
     height = models.PositiveIntegerField('Height', null=True)
     duration = models.PositiveIntegerField('Duration (ms)', null=True)
