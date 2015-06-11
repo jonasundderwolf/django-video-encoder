@@ -18,7 +18,7 @@ def format_upload_to(instance, filename):
         instance.format,
         dirname,
         slugify(os.path.splitext(original_filename)[0]),
-        os.path.splitext(filename)[1].lower()),
+        os.path.splitext(filename)[1].lower())
 
 
 class Format(models.Model):
