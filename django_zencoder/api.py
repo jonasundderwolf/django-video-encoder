@@ -1,28 +1,31 @@
-import os
+import cgi
 from os.path import basename
 import json
 import logging
-import urllib
 import urllib2
+
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core.files import File
 from django.contrib.sites.models import Site
 from django.conf import settings
 from django.core import signing
+
 from .errors import ZencoderError
 
 logger = logging.getLogger(__name__)
 
 
-def send_request(data):
-    headers = {
-        "Content-type": "application/json",
-        "Accept": "application/json",
-    }
-    data['api_key'] = settings.ZENCODER_API_KEY
-    request = urllib2.Request('https://app.zencoder.com/api/v2/jobs',
-                              data=json.dumps(data), headers=headers)
+def open_url(url, data=None):
+    if data:
+        headers = {
+            "Content-type": "application/json",
+            "Accept": "application/json",
+        }
+        request = urllib2.Request(url, data=json.dumps(data), headers=headers)
+    else:
+        request = urllib2.Request(url)
+
     try:
         response = urllib2.urlopen(request)
     except urllib2.URLError, e:
@@ -33,6 +36,13 @@ def send_request(data):
             raise ZencoderError(', '.join(json.loads(response.text)['errors']))
         except ValueError:
             raise ZencoderError(response.reason or 'HTTP error: %d' % response.status)
+
+    return response
+
+
+def send_request(data):
+    data['api_key'] = settings.ZENCODER_API_KEY
+    response = open_url('https://app.zencoder.com/api/v2/jobs', data)
     return json.loads(response.read())
 
 
@@ -106,13 +116,25 @@ def get_video(content_type_id, object_id, field_name, data):
         # TODO: confirm that the referenced object still exists, it might have been
         # deleted between the encoding request and the notification
 
-        filename, header = urllib.urlretrieve(output['url'])
+        response = open_url(output['url'])
+        try:
+            # parse content-disposition header
+            filename = cgi.parse_header(
+                response.info()['Content-Disposition'])[1]['filename']
+        except KeyError:
+            filename = output['url'].rsplit('/', 1)[1]
+
+        # remove trailing parameters
+        filename = filename.split('?', 1)[0]
+
+        f = File(response)
+        f.size = response.info()['Content-Length']
+
         fmt.width = output['width']
         fmt.height = output['height']
         fmt.duration = output['duration_in_ms']
         fmt.extra_info = data
-        fmt.file.save(basename(filename), File(open(filename, 'r')))
-        os.unlink(filename)
+        fmt.file.save(basename(filename), f)
 
     elif output['state'] == 'failed':
         logger.warning('Zencoder error for %s/%s/%s: %s',
