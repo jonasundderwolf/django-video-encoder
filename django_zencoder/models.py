@@ -16,7 +16,7 @@ def format_upload_to(instance, filename):
         getattr(instance.video, instance.field_name).name)
     return 'formats/%s/%s/%s%s' % (
         instance.format,
-        dirname,
+        dirname or '.',
         slugify(os.path.splitext(original_filename)[0]),
         os.path.splitext(filename)[1].lower())
 
