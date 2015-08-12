@@ -135,6 +135,7 @@ def get_video(content_type_id, object_id, field_name, data):
         fmt.duration = output['duration_in_ms']
         fmt.extra_info = data
         fmt.file.save(basename(filename), f)
+        logger.info(u'File %s saved as %s', filename, fmt.file.name)
 
     elif output['state'] == 'failed':
         logger.warning('Zencoder error for %s/%s/%s: %s',
