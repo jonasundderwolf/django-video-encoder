@@ -11,6 +11,7 @@ from django.core.files import File
 from django.contrib.sites.models import Site
 from django.conf import settings
 from django.core import signing
+from django.core.exceptions import ObjectDoesNotExist
 
 from .errors import ZencoderError
 
@@ -105,41 +106,44 @@ def get_video(content_type_id, object_id, field_name, data):
 
     output = json.loads(data)['output']
 
-    if output['state'] == 'finished':
-        from .models import Format
+    try:
+        content_type.get_object_for_this_type(pk=object_id)
+    except ObjectDoesNotExist:
+        logger.warning("The model %s/%s has been removed after being sent to Zencoder",
+                       content_type, object_id, field_name)
+    else:
+        if output['state'] == 'finished':
+            from .models import Format
 
-        fmt, __ = Format.objects.get_or_create(
-            content_type=content_type,
-            object_id=object_id,
-            field_name=field_name,
-            format=output['label'])
+            fmt, __ = Format.objects.get_or_create(
+                content_type=content_type,
+                object_id=object_id,
+                field_name=field_name,
+                format=output['label'])
 
-        # TODO: confirm that the referenced object still exists, it might have been
-        # deleted between the encoding request and the notification
+            response = open_url(output['url'])
+            try:
+                # parse content-disposition header
+                filename = cgi.parse_header(
+                    response.info()['Content-Disposition'])[1]['filename']
+            except KeyError:
+                filename = 'format_%s.%s' % (
+                    datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
+                    response.info()['Content-Type'].rsplit('/', 1)[1])
 
-        response = open_url(output['url'])
-        try:
-            # parse content-disposition header
-            filename = cgi.parse_header(
-                response.info()['Content-Disposition'])[1]['filename']
-        except KeyError:
-            filename = 'format_%s.%s' % (
-                datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
-                response.info()['Content-Type'].rsplit('/', 1)[1])
+            # remove trailing parameters
+            filename = filename.split('?', 1)[0]
 
-        # remove trailing parameters
-        filename = filename.split('?', 1)[0]
+            f = File(response)
+            f.size = response.info()['Content-Length']
 
-        f = File(response)
-        f.size = response.info()['Content-Length']
+            fmt.width = output['width']
+            fmt.height = output['height']
+            fmt.duration = output['duration_in_ms']
+            fmt.extra_info = data
+            fmt.file.save(basename(filename), f)
+            logger.info(u'File %s saved as %s', filename, fmt.file.name)
 
-        fmt.width = output['width']
-        fmt.height = output['height']
-        fmt.duration = output['duration_in_ms']
-        fmt.extra_info = data
-        fmt.file.save(basename(filename), f)
-        logger.info(u'File %s saved as %s', filename, fmt.file.name)
-
-    elif output['state'] == 'failed':
-        logger.warning('Zencoder error for %s/%s/%s: %s',
-                       content_type, object_id, field_name, output['error_message'])
+        elif output['state'] == 'failed':
+            logger.warning('Zencoder error for %s/%s/%s: %s',
+                           content_type, object_id, field_name, output['error_message'])
