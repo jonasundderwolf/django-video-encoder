@@ -2,7 +2,7 @@ import os.path
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils.text import slugify
 from .api import encode
@@ -25,7 +25,7 @@ class Format(models.Model):
     object_id = models.PositiveIntegerField()
     content_type = models.ForeignKey(ContentType)
 
-    video = generic.GenericForeignKey()
+    video = GenericForeignKey()
     field_name = models.CharField(max_length=255)
 
     format = models.CharField(max_length=255, choices=[
