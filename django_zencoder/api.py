@@ -30,7 +30,7 @@ def open_url(url, data=None):
 
     try:
         response = urllib2.urlopen(request)
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         raise ZencoderError(e.reason)
 
     if response.getcode() // 100 != 2:
@@ -93,7 +93,7 @@ def encode(obj, field_name, file_url=None):
         result = send_request(data)
         logger.info('Sent encoding request for %s/%s/%s, job id: %s',
                     content_type, obj.pk, field_name, result['id'])
-    except ZencoderError, e:
+    except ZencoderError as e:
         result = None
         logger.warning('Error when sending encoding request to zencoder for %s/%s/%s: %s',
                        content_type, obj.pk, field_name, e)
