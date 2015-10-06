@@ -3,7 +3,10 @@ import datetime
 from os.path import basename
 import json
 import logging
-import urllib2
+try:
+    from urllib.request import Request, urlopen, URLError
+except ImportError:
+    from urllib2 import Request, urlopen, URLError
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
@@ -24,13 +27,13 @@ def open_url(url, data=None):
             "Content-type": "application/json",
             "Accept": "application/json",
         }
-        request = urllib2.Request(url, data=json.dumps(data), headers=headers)
+        request = Request(url, data=json.dumps(data), headers=headers)
     else:
-        request = urllib2.Request(url)
+        request = Request(url)
 
     try:
-        response = urllib2.urlopen(request)
-    except urllib2.URLError as e:
+        response = urlopen(request)
+    except URLError as e:
         raise ZencoderError(e.reason)
 
     if response.getcode() // 100 != 2:
