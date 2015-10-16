@@ -8,7 +8,7 @@ import django_zencoder.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contenttypes', '0002_remove_content_type_name'),
+        ('contenttypes', '0001_initial'),
     ]
 
     operations = [
