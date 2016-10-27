@@ -139,7 +139,7 @@ def get_video(content_type_id, object_id, field_name, data):
                         object_id=object_id,
                         time=i * THUMBNAIL_INTERVAL,
                     )
-                    thmb.image.save(basename(filename), File(open(filename, 'r')))
+                    thmb.image.save(basename(filename), File(open(filename, 'rb')))
                     os.unlink(filename)
 
             fmt, __ = Format.objects.get_or_create(
