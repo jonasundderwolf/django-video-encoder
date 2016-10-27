@@ -46,7 +46,11 @@ def thumbnail_upload_to(instance, filename):
         os.path.splitext(filename)[1].lower()
     )
 
+
 class Thumbnail(models.Model):
+    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType)
+
     time = models.PositiveIntegerField('Time (s)')
     width = models.PositiveIntegerField('Width', null=True)
     height = models.PositiveIntegerField('Height', null=True)
