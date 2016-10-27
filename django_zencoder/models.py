@@ -52,7 +52,7 @@ class Thumbnail(models.Model):
     height = models.PositiveIntegerField('Height', null=True)
     image = models.ImageField(upload_to=thumbnail_upload_to, max_length=512, blank=True, null=True)
 
-    video = models.GenericForeignKey()
+    video = GenericForeignKey()
 
 
 def detect_file_changes(sender, instance, **kwargs):
