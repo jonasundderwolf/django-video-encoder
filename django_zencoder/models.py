@@ -39,11 +39,9 @@ class Format(models.Model):
 
 
 def thumbnail_upload_to(instance, filename):
-    return 'footage/thumbnails/%s/%s' % (
-        'thumbnails',
+    return 'footage/thumbnails/%s/%s.jpg' % (
         instance.video.pk,
         instance.time,
-        os.path.splitext(filename)[1].lower()
     )
 
 
