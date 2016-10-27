@@ -1,10 +1,11 @@
+import os
 import cgi
 import datetime
 from os.path import basename
 import json
 import logging
 try:
-    from urllib.request import Request, urlopen, URLError
+    from urllib.request import Request, urlopen, URLError, urlretrieve
 except ImportError:
     from urllib2 import Request, urlopen, URLError
 
@@ -19,6 +20,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from .errors import ZencoderError
 
 logger = logging.getLogger(__name__)
+
+THUMBNAIL_INTERVAL = 20
 
 
 def open_url(url, data=None):
@@ -92,6 +95,14 @@ def encode(obj, field_name, file_url=None):
         "output": outputs,
         "test": getattr(settings, 'ZENCODER_INTEGRATION_MODE', False),
     }
+
+    # get thumbnails for first output only
+    data['output'][0]["thumbnails"] = {
+        "interval": THUMBNAIL_INTERVAL,
+        "start_at_first_frame": 1,
+        "format": "jpg",
+    }
+
     try:
         result = send_request(data)
         logger.info('Sent encoding request for %s/%s/%s, job id: %s',
@@ -116,6 +127,16 @@ def get_video(content_type_id, object_id, field_name, data):
                        content_type, object_id, field_name)
     else:
         if output['state'] == 'finished':
+
+            # get preview pictures
+            if output.get('thumbnails'):
+                for i, thumbnail in enumerate(output['thumbnails'][0]['images']):
+                    filename, header = urlretrieve(thumbnail['url'])
+                    thumb, created = content_type.thumbnails.get_or_create(
+                        time=i * THUMBNAIL_INTERVAL)
+                    thumb.image.save(basename(filename), File(open(filename, 'r')))
+                    os.unlink(filename)
+
             from .models import Format
 
             fmt, __ = Format.objects.get_or_create(
