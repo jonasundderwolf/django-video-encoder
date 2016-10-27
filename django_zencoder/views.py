@@ -25,5 +25,5 @@ def notification(request):
                     extra={'request': request})
         return HttpResponse('Invalid payload', status=400)  # BAD REQUEST
 
-    get_video(data['ct'], data['obj'], data['fld'], request.body)
+    get_video(data['ct'], data['obj'], data['fld'], request.body.decode('utf-8'))
     return HttpResponse(status=204)  # NO CONTENT
