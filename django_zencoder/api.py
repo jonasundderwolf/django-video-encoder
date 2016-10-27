@@ -128,16 +128,19 @@ def get_video(content_type_id, object_id, field_name, data):
     else:
         if output['state'] == 'finished':
 
+            from .models import Format, Thumbnail
+
             # get preview pictures
             if output.get('thumbnails'):
                 for i, thumbnail in enumerate(output['thumbnails'][0]['images']):
                     filename, header = urlretrieve(thumbnail['url'])
-                    thumb, created = content_type.thumbnails.get_or_create(
-                        time=i * THUMBNAIL_INTERVAL)
-                    thumb.image.save(basename(filename), File(open(filename, 'r')))
+                    thmb, __ = Thumbnail.objects.get_or_create(
+                        content_type=content_type,
+                        object_id=object_id,
+                        time=i * THUMBNAIL_INTERVAL,
+                    )
+                    thmb.image.save(basename(filename), File(open(filename, 'r')))
                     os.unlink(filename)
-
-            from .models import Format
 
             fmt, __ = Format.objects.get_or_create(
                 content_type=content_type,

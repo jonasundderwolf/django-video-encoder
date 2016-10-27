@@ -38,6 +38,23 @@ class Format(models.Model):
     extra_info = models.TextField('Zencoder information (JSON)', blank=True)
 
 
+def thumbnail_upload_to(instance, filename):
+    return 'footage/thumbnails/%s/%s' % (
+        'thumbnails',
+        instance.video.pk,
+        instance.time,
+        os.path.splitext(filename)[1].lower()
+    )
+
+class Thumbnail(models.Model):
+    time = models.PositiveIntegerField('Time (s)')
+    width = models.PositiveIntegerField('Width', null=True)
+    height = models.PositiveIntegerField('Height', null=True)
+    image = models.ImageField(upload_to=thumbnail_upload_to, max_length=512, blank=True, null=True)
+
+    video = models.GenericForeignKey()
+
+
 def detect_file_changes(sender, instance, **kwargs):
     field = ZENCODER_MODELS.get('%s.%s' % (sender._meta.app_label, sender._meta.model_name))
     if field and hasattr(getattr(instance, field), 'file') and isinstance(
