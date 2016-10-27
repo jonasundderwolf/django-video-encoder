@@ -27,7 +27,7 @@ def open_url(url, data=None):
             "Content-type": "application/json",
             "Accept": "application/json",
         }
-        request = Request(url, data=encode(json.dumps(data), 'utf-8'), headers=headers)
+        request = Request(url, data=json.dumps(data).encode('utf-8'), headers=headers)
     else:
         request = Request(url)
 
