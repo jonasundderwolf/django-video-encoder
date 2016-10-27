@@ -48,7 +48,7 @@ def open_url(url, data=None):
 def send_request(data):
     data['api_key'] = settings.ZENCODER_API_KEY
     response = open_url('https://app.zencoder.com/api/v2/jobs', data)
-    return json.loads(response.read())
+    return json.loads(response.read().decode('utf-8'))
 
 
 def encode(obj, field_name, file_url=None):
