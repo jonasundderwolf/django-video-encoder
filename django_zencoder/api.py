@@ -129,7 +129,7 @@ def get_video(content_type_id, object_id, field_name, data):
                 # parse content-disposition header
                 filename = cgi.parse_header(
                     response.info()['Content-Disposition'])[1]['filename']
-            except KeyError:
+            except (KeyError, TypeError):
                 filename = 'format_%s.%s' % (
                     datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
                     response.info()['Content-Type'].rsplit('/', 1)[1])
