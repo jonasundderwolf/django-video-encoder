@@ -21,8 +21,6 @@ from .errors import ZencoderError
 
 logger = logging.getLogger(__name__)
 
-THUMBNAIL_INTERVAL = 20
-
 
 def open_url(url, data=None):
     if data:
@@ -98,7 +96,7 @@ def encode(obj, field_name, file_url=None):
 
     # get thumbnails for first output only
     data['output'][0]["thumbnails"] = {
-        "interval": THUMBNAIL_INTERVAL,
+        "interval": settings.ZENCODER_THUMBNAIL_INTERVAL,
         "start_at_first_frame": 1,
         "format": "jpg",
     }
@@ -137,7 +135,7 @@ def get_video(content_type_id, object_id, field_name, data):
                     thmb, __ = Thumbnail.objects.get_or_create(
                         content_type=content_type,
                         object_id=object_id,
-                        time=i * THUMBNAIL_INTERVAL,
+                        time=i * settings.ZENCODER_THUMBNAIL_INTERVAL,
                     )
                     thmb.image.save(basename(filename), File(open(filename, 'rb')))
                     os.unlink(filename)
