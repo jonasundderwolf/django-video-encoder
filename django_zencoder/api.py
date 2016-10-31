@@ -7,6 +7,7 @@ import logging
 try:
     from urllib.request import Request, urlopen, URLError, urlretrieve
 except ImportError:
+    from urllib import urlretrieve
     from urllib2 import Request, urlopen, URLError
 
 from django.contrib.contenttypes.models import ContentType
