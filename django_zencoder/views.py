@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.core import signing
-from .api import get_video
+from .tasks import get_video_task
 
 logger = logging.getLogger(__name__)
 
@@ -25,5 +25,6 @@ def notification(request):
                     extra={'request': request})
         return HttpResponse('Invalid payload', status=400)  # BAD REQUEST
 
-    get_video(data['ct'], data['obj'], data['fld'], request.body.decode('utf-8'))
+    get_video_task.delay(
+        data['ct'], data['obj'], data['fld'], request.body.decode('utf-8'))
     return HttpResponse(status=204)  # NO CONTENT
