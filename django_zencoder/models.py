@@ -58,13 +58,14 @@ class Thumbnail(models.Model):
 
 
 def detect_file_changes(sender, instance, **kwargs):
-    field = ZENCODER_MODELS.get('%s.%s' % (sender._meta.app_label, sender._meta.model_name))
-    if field and hasattr(getattr(instance, field), 'file') and isinstance(
-            getattr(instance, field).file, UploadedFile):
+    field_name = ZENCODER_MODELS.get('%s.%s' % (sender._meta.app_label, sender._meta.model_name))
+    field = getattr(instance, field_name)
+    if field_name and field and hasattr(field, 'file') and isinstance(
+            field.file, UploadedFile):
         if hasattr(instance, '_zencoder_updates'):
-            instance._zencoder_updates.append(field)
+            instance._zencoder_updates.append(field_name)
         else:
-            instance._zencoder_updates = [field]
+            instance._zencoder_updates = [field_name]
 
 
 def trigger_encoding(sender, instance, **kwargs):
