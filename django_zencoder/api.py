@@ -69,6 +69,11 @@ def encode(obj, field_name, file_url=None):
         file_url = getattr(obj, field_name).url
 
     content_type = ContentType.objects.get_for_model(type(obj))
+
+    color_metadata = "preserve"
+    if getattr(settings, 'ZENCODER_DISCARD_COLOR_METADATA', 'preserve'):
+        color_metadata = "discard"
+
     outputs = []
     for fmt in settings.ZENCODER_FORMATS:
         data = {
@@ -86,6 +91,7 @@ def encode(obj, field_name, file_url=None):
             "width": fmt.get("width"),
             "height": fmt.get("height"),
             "notifications": [notification_url],
+            "color_metadata": color_metadata,
         })
 
     data = {
