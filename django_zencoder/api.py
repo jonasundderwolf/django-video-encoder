@@ -18,6 +18,7 @@ from django.conf import settings
 from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist
 
+from . import signals
 from .errors import ZencoderError
 
 logger = logging.getLogger(__name__)
@@ -110,12 +111,16 @@ def encode(obj, field_name, file_url=None):
 
     try:
         result = send_request(data)
-        logger.info('Sent encoding request for %s/%s/%s, job id: %s',
-                    content_type, obj.pk, field_name, result['id'])
     except ZencoderError as e:
         result = None
         logger.warning('Error when sending encoding request to zencoder for %s/%s/%s: %s',
                        content_type, obj.pk, field_name, e)
+        signals.sending_failed.send(sender=type(obj), instance=obj, error=e)
+    else:
+        logger.info('Sent encoding request for %s/%s/%s, job id: %s',
+                    content_type, obj.pk, field_name, result['id'])
+        signals.sent_to_zencoder.send(
+            sender=type(obj), instance=obj, result=result)
     return result
 
 
@@ -126,7 +131,7 @@ def get_video(content_type_id, object_id, field_name, data):
     output = json.loads(data)['output']
 
     try:
-        content_type.get_object_for_this_type(pk=object_id)
+        obj = content_type.get_object_for_this_type(pk=object_id)
     except ObjectDoesNotExist:
         logger.warning("The model %s/%s has been removed after being sent to Zencoder",
                        content_type, object_id, field_name)
@@ -175,7 +180,14 @@ def get_video(content_type_id, object_id, field_name, data):
             fmt.extra_info = data
             fmt.file.save(basename(filename), f)
             logger.info(u'File %s saved as %s', filename, fmt.file.name)
+            signals.received_format.send(
+                sender=type(obj), instance=obj, format=fmt, result=data)
 
         elif output['state'] == 'failed':
             logger.warning('Zencoder error for %s/%s/%s: %s',
                            content_type, object_id, field_name, output['error_message'])
+            signals.encoding_failed.send(sender=type(obj), instance=obj, result=data)
+
+        else:
+            logger.error('Unknown zencoder status for %s/%s/%s: %s',
+                           content_type, object_id, field_name, data)
