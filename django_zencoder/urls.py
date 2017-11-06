@@ -1,8 +1,8 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from .views import notification
 
-urlpatterns = patterns(
+urlpatterns = [
     'django_zencoder.views',
     url(r'notify/', notification, name='zencoder_notification'),
-)
+]
