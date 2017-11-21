@@ -23,7 +23,7 @@ def format_upload_to(instance, filename):
 
 class Format(models.Model):
     object_id = models.PositiveIntegerField()
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
 
     video = GenericForeignKey()
     field_name = models.CharField(max_length=255)
@@ -47,7 +47,7 @@ def thumbnail_upload_to(instance, filename):
 
 class Thumbnail(models.Model):
     object_id = models.PositiveIntegerField()
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
 
     time = models.PositiveIntegerField('Time (s)')
     width = models.PositiveIntegerField('Width', null=True)
