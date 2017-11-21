@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+import django.db.models.deletion
 import django_zencoder.models
 
 
@@ -22,7 +23,7 @@ class Migration(migrations.Migration):
                 ('width', models.PositiveIntegerField(verbose_name='Width', null=True)),
                 ('height', models.PositiveIntegerField(verbose_name='Height', null=True)),
                 ('image', models.ImageField(max_length=512, blank=True, null=True, upload_to=django_zencoder.models.thumbnail_upload_to)),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
             ],
         ),
         migrations.AlterField(

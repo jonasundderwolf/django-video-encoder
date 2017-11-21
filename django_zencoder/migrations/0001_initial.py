@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+import django.db.models.deletion
 import django_zencoder.models
 
 
@@ -24,7 +25,7 @@ class Migration(migrations.Migration):
                 ('height', models.PositiveIntegerField(null=True, verbose_name=b'Height')),
                 ('duration', models.PositiveIntegerField(null=True, verbose_name=b'Duration (ms)')),
                 ('extra_info', models.TextField(verbose_name=b'Zencoder information (JSON)', blank=True)),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
             ],
         ),
     ]
