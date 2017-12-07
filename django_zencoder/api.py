@@ -11,7 +11,7 @@ except ImportError:
     from urllib2 import Request, urlopen, URLError
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files import File
 from django.contrib.sites.models import Site
 from django.conf import settings
