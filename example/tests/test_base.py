@@ -11,8 +11,8 @@ from example.models import Video
 def test_encode_called(mocker):
     """Assert encode will try to send data to zencoder"""
     file_mock = mock.MagicMock(spec=File)
-    file_mock.name = 'video.vid'
-    mocked_send_request = mocker.patch('django_zencoder.api.send_request')
+    file_mock.name = "video.vid"
+    mocked_send_request = mocker.patch("django_zencoder.api.send_request")
     video_obj = Video(video_file=file_mock)
-    encode(video_obj, 'video_file')
+    encode(video_obj, "video_file")
     assert mocked_send_request.called

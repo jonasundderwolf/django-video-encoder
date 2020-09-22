@@ -10,4 +10,4 @@ class Video(models.Model):
     formats = GenericRelation(Format)
 
     class Meta:
-        app_label = 'example'
+        app_label = "example"

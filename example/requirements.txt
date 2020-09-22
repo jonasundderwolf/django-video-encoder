@@ -7,4 +7,4 @@ pytest-factoryboy
 pytest-cov
 pytest-isort
 pytest-mock
-# pytest-black
+pytest-black
