@@ -1,12 +1,13 @@
 import os.path
+
 from django.conf import settings
-from django.core.files.uploadedfile import UploadedFile
-from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.files.uploadedfile import UploadedFile
+from django.db import models
 from django.utils.text import slugify
-from .api import encode
 
+from .api import encode
 
 ZENCODER_MODELS = {}
 

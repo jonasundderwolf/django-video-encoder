@@ -1,19 +1,19 @@
-import os
 import cgi
 import datetime
-from os.path import basename
 import json
 import logging
+import os
+from os.path import basename
 from urllib.error import URLError
 from urllib.request import Request, urlopen, urlretrieve
 
-from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse
-from django.core.files import File
-from django.contrib.sites.models import Site
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
+from django.urls import reverse
 
 from . import signals
 from .errors import ZencoderError
