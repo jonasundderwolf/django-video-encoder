@@ -4,11 +4,8 @@ import datetime
 from os.path import basename
 import json
 import logging
-try:
-    from urllib.request import Request, urlopen, URLError, urlretrieve
-except ImportError:
-    from urllib import urlretrieve
-    from urllib2 import Request, urlopen, URLError
+from urllib.error import URLError
+from urllib.request import Request, urlopen, urlretrieve
 
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
@@ -86,7 +83,6 @@ def encode(obj, field_name, file_url=None):
             absolute_url(reverse('zencoder_notification')), signing.dumps(data))
 
         outputs.append({
-            "video_codec": format,
             "label": fmt['label'],
             "video_codec": fmt['codec'],
             "width": fmt.get("width"),

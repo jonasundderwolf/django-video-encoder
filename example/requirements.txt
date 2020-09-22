@@ -1,1 +1,10 @@
-django>1.7<1.8
+django==2.2.16
+celery
+
+pytest
+pytest-django
+pytest-factoryboy
+pytest-cov
+pytest-isort
+pytest-mock
+# pytest-black
