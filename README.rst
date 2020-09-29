@@ -13,20 +13,24 @@ django-zencoder
     :target: https://pypi.python.org/pypi/django-zencoder
 
 
-Simple integration of a Django model with a FileField with zencoder.com
+Simple integration with zencoder.com
+
+Upload videos and asynchronously store the encoded videos.
 
 Requirements
 ============
 
-Django 2.2+ (obviously) and celery to asynchronously run the encoding tasks.
+Django 2.2+ and Celery to asynchronously run the encoding tasks.
 
 Usage
 =====
 
+You will need to add the following to your django settings:
+
 * Add `django_zencoder` to `INSTALLED_APPS`
-* Add `ZENCODER_API_KEY` and `ZENCODER_NOTIFICATION_SECRET` to your settings file
-* Set the `ZENCODER_THUMBNAIL_INTERVAL` in settings
-* Add the desired formats in your settings file, i.e. ::
+* Add `ZENCODER_API_KEY` and `ZENCODER_NOTIFICATION_SECRET`
+* Set the `ZENCODER_THUMBNAIL_INTERVAL`
+* Add the desired formats, for example ::
     ZENCODER_FORMATS = [
         {'label': 'H.264 (HD)', 'codec': 'h264'},
         {'label': 'H.264', 'codec': 'h264', 'width': 720, 'height': 404},
