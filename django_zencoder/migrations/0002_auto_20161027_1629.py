@@ -11,12 +11,15 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
-        ("django_zencoder", "0001_initial"),
+        ("django_video_encoder", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
             name="Thumbnail",
+            options={
+                "db_table": "django_zencoder_thumbnail",
+            },
             fields=[
                 (
                     "id",

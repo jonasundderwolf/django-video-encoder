@@ -16,6 +16,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.CreateModel(
             name="Format",
+            options={
+                "db_table": "django_zencoder_format",
+            },
             fields=[
                 (
                     "id",
