@@ -9,7 +9,7 @@ from django.utils.text import slugify
 
 from .api import encode
 
-ZENCODER_MODELS = {}
+VIDEO_ENCODER_MODELS = {}
 
 
 def format_upload_to(instance, filename):
@@ -33,14 +33,16 @@ class Format(models.Model):
 
     format = models.CharField(
         max_length=255,
-        choices=[(f["label"], f["label"]) for f in settings.ZENCODER_FORMATS],
+        choices=[
+            (f["label"], f["label"]) for f in settings.DJANGO_VIDEO_ENCODER_FORMATS
+        ],
     )
     file = models.FileField(upload_to=format_upload_to, max_length=2048)
     width = models.PositiveIntegerField("Width", null=True)
     height = models.PositiveIntegerField("Height", null=True)
     duration = models.PositiveIntegerField("Duration (ms)", null=True)
 
-    extra_info = models.TextField("Zencoder information (JSON)", blank=True)
+    extra_info = models.TextField("Encoder information (JSON)", blank=True)
 
 
 def thumbnail_upload_to(instance, filename):
@@ -65,26 +67,26 @@ class Thumbnail(models.Model):
 
 
 def detect_file_changes(sender, instance, **kwargs):
-    field_name = ZENCODER_MODELS.get(
+    field_name = VIDEO_ENCODER_MODELS.get(
         "%s.%s" % (sender._meta.app_label, sender._meta.model_name)
     )
     if field_name:
         field = getattr(instance, field_name)
         if field and hasattr(field, "file") and isinstance(field.file, UploadedFile):
-            if hasattr(instance, "_zencoder_updates"):
-                instance._zencoder_updates.append(field_name)
+            if hasattr(instance, "_video_encoder_updates"):
+                instance._video_encoder_updates.append(field_name)
             else:
-                instance._zencoder_updates = [field_name]
+                instance._video_encoder_updates = [field_name]
 
 
 def trigger_encoding(sender, instance, **kwargs):
-    for field in getattr(instance, "_zencoder_updates", ()):
+    for field in getattr(instance, "_video_encoder_updates", ()):
         encode(instance, field)
 
 
-if getattr(settings, "ZENCODER_MODELS", None):
-    for name in settings.ZENCODER_MODELS:
+if getattr(settings, "VIDEO_ENCODER_MODELS", None):
+    for name in settings.VIDEO_ENCODER_MODELS:
         app_model, field = name.rsplit(".", 1)
-        ZENCODER_MODELS[app_model.lower()] = field
+        VIDEO_ENCODER_MODELS[app_model.lower()] = field
     models.signals.pre_save.connect(detect_file_changes)
     models.signals.post_save.connect(trigger_encoding)

@@ -30,11 +30,11 @@ TEMPLATE_DIRS = (os.path.join(BASE_DIR, "templates"),)
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sites",
-    "django_zencoder.apps.ZencoderConfig",
+    "django_video_encoder",
     "example",
 ]
 
-ZENCODER_THUMBNAIL_INTERVAL = 20
-ZENCODER_FORMATS = [
+DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL = 20
+DJANGO_VIDEO_ENCODER_FORMATS = [
     {"label": "H.264", "codec": "h264", "width": 720, "height": 480},
 ]
