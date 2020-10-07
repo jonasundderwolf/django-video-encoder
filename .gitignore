@@ -1,5 +1,6 @@
-django_zencoder.egg-info/
+*.egg-info/
 *__pycache__
 .idea
 *.pyc
 *.tox/*
+db.sqlite3

@@ -30,7 +30,7 @@ TEMPLATE_DIRS = (os.path.join(BASE_DIR, "templates"),)
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sites",
-    "django_zencoder",
+    "django_zencoder.apps.ZencoderConfig",
     "example",
 ]
 
