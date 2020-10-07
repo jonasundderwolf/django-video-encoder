@@ -1,4 +1,7 @@
-from django.conf.urls import patterns
+from django.conf.urls import url
 
+from django_zencoder.views import notification
 
-urlpatterns = patterns('',)
+urlpatterns = [
+    url(r"notify/", notification, name="zencoder_notification"),
+]

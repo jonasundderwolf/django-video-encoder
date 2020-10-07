@@ -1,1 +1,5 @@
 django_zencoder.egg-info/
+*__pycache__
+.idea
+*.pyc
+*.tox/*
