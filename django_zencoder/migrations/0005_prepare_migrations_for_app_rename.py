@@ -29,10 +29,13 @@ class Migration(migrations.Migration):
             name="thumbnail",
             table="django_video_encoder_thumbnail",
         ),
+        # Black doesn't like SQL statements `\"`
+        # fmt: off
         # Pre-faking the initial migrations as the upcoming version breaks also migration
         # history
         migrations.RunSQL(
             "INSERT INTO django_migrations (\"app\", \"name\", \"applied\") "
             "VALUES ('django_video_encoder', '0001_initial', NOW());"
         ),
+        # fmt: on
     ]
