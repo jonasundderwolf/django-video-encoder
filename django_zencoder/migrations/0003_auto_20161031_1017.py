@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("django_video_encoder", "0002_auto_20161027_1629"),
+        ("django_zencoder", "0002_auto_20161027_1629"),
     ]
 
     operations = [

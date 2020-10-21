@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-# TODO: apparently required for permissions and co
+# This is required for permissions and co
 def migrate_content_types(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
     ContentType.objects.filter(app_label="django_zencoder").update(
@@ -14,7 +14,7 @@ def migrate_content_types(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("django_video_encoder", "0004_auto_20170729_1732"),
+        ("django_zencoder", "0004_auto_20170729_1732"),
     ]
 
     operations = [
@@ -29,12 +29,10 @@ class Migration(migrations.Migration):
             name="thumbnail",
             table="django_video_encoder_thumbnail",
         ),
-        # We will start migrations from scratch after renaming in the next release
-        # This will cause the migrations to always seem "unapplied".
-        # Delete all but initial migration
+        # Pre-faking the initial migrations as the upcoming version breaks also migration
+        # history
         migrations.RunSQL(
-            "DELETE FROM django_migrations "
-            "WHERE app = 'django_video_encoder' "
-            "AND name != '0001_initial';"
+            "INSERT INTO django_migrations (\"app\", \"name\", \"applied\") "
+            "VALUES ('django_video_encoder', '0001_initial', NOW());"
         ),
     ]
