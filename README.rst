@@ -32,6 +32,7 @@ You will need to add the following to your django settings:
 * Add `django_video_encoder` to `INSTALLED_APPS`
 * Set the `DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL`
 * Add the desired formats, for example ::
+
     DJANGO_VIDEO_ENCODER_FORMATS = [
         {'label': 'H.264 (HD)', 'codec': 'h264'},
         {'label': 'H.264', 'codec': 'h264', 'width': 720, 'height': 404},
@@ -42,8 +43,7 @@ You will need to add the following to your django settings:
 And specific settings using the zencoder backend:
 
 * Add `ZENCODER_API_KEY` and `ZENCODER_NOTIFICATION_SECRET`
-* You may also specify `ZENCODER_REGION` (default: europe) to the
-most suitable for you
+* You may also specify `ZENCODER_REGION` (default: europe) to the most suitable for you
 
 Tests
 =====
