@@ -1,12 +1,12 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="django_zencoder",
-    description="Simple integration of a Django model with a FileField with zencoder.com",
+    name="django_video_encoder",
+    description="Simple integration of a Django model with a FileField to encoding backends",
     long_description=open("README.rst").read(),
     author="Jonas und der Wolf GmbH",
     author_email="opensource@jonasundderwolf.de",
-    url="http://github.com/jonasundderwolf/django-zencoder",
+    url="http://github.com/jonasundderwolf/django-video-encoder",
     packages=find_packages(),
     include_package_data=True,
     classifiers=[

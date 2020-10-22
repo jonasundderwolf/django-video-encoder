@@ -1,7 +1,7 @@
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 
-from django_zencoder.models import Format
+from django_video_encoder.models import Format
 
 
 class Video(models.Model):

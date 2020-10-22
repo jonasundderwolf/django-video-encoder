@@ -18,13 +18,15 @@ def notification(request):
         request.META.get("HTTP_X_ZENCODER_NOTIFICATION_SECRET")
         != settings.ZENCODER_NOTIFICATION_SECRET
     ):
-        logger.warn("Invalid Zencoder notification secret", extra={"request": request})
+        logger.warning(
+            "Invalid Zencoder notification secret", extra={"request": request}
+        )
         return HttpResponse("Invalid notification secret", status=400)  # BAD REQUEST
 
     try:
         data = signing.loads(request.META["QUERY_STRING"])
     except signing.BadSignature:
-        logger.warn(
+        logger.warning(
             "Invalid payload for Zencoder notification", extra={"request": request}
         )
         return HttpResponse("Invalid payload", status=400)  # BAD REQUEST

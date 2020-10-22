@@ -73,7 +73,7 @@ def encode(obj, field_name, file_url=None):
         color_metadata = "discard"
 
     outputs = []
-    for fmt in settings.ZENCODER_FORMATS:
+    for fmt in settings.DJANGO_VIDEO_ENCODER_FORMATS:
         data = {
             "obj": obj.pk,
             "ct": content_type.pk,
@@ -104,7 +104,7 @@ def encode(obj, field_name, file_url=None):
 
     # get thumbnails for first output only
     data["output"][0]["thumbnails"] = {
-        "interval": settings.ZENCODER_THUMBNAIL_INTERVAL,
+        "interval": settings.DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL,
         "start_at_first_frame": 1,
         "format": "jpg",
     }
@@ -160,7 +160,7 @@ def get_video(content_type_id, object_id, field_name, data):
                     thmb, __ = Thumbnail.objects.get_or_create(
                         content_type=content_type,
                         object_id=object_id,
-                        time=i * settings.ZENCODER_THUMBNAIL_INTERVAL,
+                        time=i * settings.DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL,
                     )
                     thmb.image.save(basename(filename), File(open(filename, "rb")))
                     os.unlink(filename)
