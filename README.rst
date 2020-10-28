@@ -17,7 +17,8 @@ Simple integration with video encoding backends.
 
 For now only the remote zencoder.com is supported.
 
-Upload videos and asynchronously store the encoded videos.
+Upload videos and asynchronously store the encoded videos and
+the generated thumbnails.
 
 Requirements
 ============
@@ -30,14 +31,19 @@ Usage
 You will need to add the following to your django settings:
 
 * Add `django_video_encoder` to `INSTALLED_APPS`
+* Add generic relation fields to your video models ::
+
+    formats = GenericRelation(Format)
+    thumbnails = GenericRelation(Thumbnail)
+
 * Set the `DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL`
 * Add the desired formats, for example ::
 
     DJANGO_VIDEO_ENCODER_FORMATS = [
-        {'label': 'H.264 (HD)', 'codec': 'h264'},
-        {'label': 'H.264', 'codec': 'h264', 'width': 720, 'height': 404},
-        {'label': 'VP9 (HD)', 'codec': 'VP9'},
-        {'label': 'VP9', 'codec': 'VP9', 'width': 720, 'height': 404},
+        {'codec': 'h264'},  # full resolution if not specified
+        {'codec': 'h264', 'width': 720, 'height': 404},
+        {'codec': 'vp9'},  # full resolution if not specified
+        {'codec': 'vp9', 'width': 720, 'height': 404},
     ]
 
 And specific settings using the zencoder backend:

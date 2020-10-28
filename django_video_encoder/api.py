@@ -1,10 +1,10 @@
-import cgi
 import datetime
 import json
 import logging
 import os
 from os.path import basename
 from urllib.error import URLError
+from urllib.parse import urljoin
 from urllib.request import Request, urlopen, urlretrieve
 
 from django.conf import settings
@@ -13,10 +13,15 @@ from django.contrib.sites.models import Site
 from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
+from django.http.multipartparser import parse_header
 from django.urls import reverse
 
 from . import signals
 from .errors import ZencoderError
+from .utils import (
+    codec_width_height_to_format_label,
+    format_label_to_codec_width_height,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +62,14 @@ def encode(obj, field_name, file_url=None):
         Helper to turn a domain-relative URL into an absolute one
         with protocol and domain
         """
+        if "://" in url:
+            return url
         domain = Site.objects.get_current().domain
         protocol = (
             "https" if getattr(settings, "ZENCODER_NOTIFICATION_SSL", False) else "http"
         )
-        return url if "://" in url else "%s://%s%s" % (protocol, domain, url)
+        base_url = f"{protocol}://{domain}"
+        return urljoin(base_url, url)
 
     if not file_url:
         file_url = getattr(obj, field_name).url
@@ -72,22 +80,23 @@ def encode(obj, field_name, file_url=None):
     if getattr(settings, "ZENCODER_DISCARD_COLOR_METADATA", "preserve"):
         color_metadata = "discard"
 
+    data = {
+        "obj": obj.pk,
+        "ct": content_type.pk,
+        "fld": field_name,
+    }
+    notification_url = (
+        f'{absolute_url(reverse("zencoder_notification"))}?{signing.dumps(data)}'
+    )
     outputs = []
     for fmt in settings.DJANGO_VIDEO_ENCODER_FORMATS:
-        data = {
-            "obj": obj.pk,
-            "ct": content_type.pk,
-            "fld": field_name,
-        }
-        notification_url = "%s?%s" % (
-            absolute_url(reverse("zencoder_notification")),
-            signing.dumps(data),
+        format_label = codec_width_height_to_format_label(
+            fmt["video_codec"], fmt.get("width"), fmt.get("height")
         )
-
         outputs.append(
             {
-                "label": fmt["label"],
-                "video_codec": fmt["codec"],
+                "label": format_label,
+                "video_codec": fmt["video_codec"],
                 "width": fmt.get("width"),
                 "height": fmt.get("height"),
                 "notifications": [notification_url],
@@ -105,7 +114,7 @@ def encode(obj, field_name, file_url=None):
     # get thumbnails for first output only
     data["output"][0]["thumbnails"] = {
         "interval": settings.DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL,
-        "start_at_first_frame": 1,
+        "start_at_first_frame": True,
         "format": "jpg",
     }
 
@@ -143,10 +152,9 @@ def get_video(content_type_id, object_id, field_name, data):
         obj = content_type.get_object_for_this_type(pk=object_id)
     except ObjectDoesNotExist:
         logger.warning(
-            "The model %s/%s has been removed after being sent to Zencoder",
+            "The object %s/%s has been removed after being sent to Zencoder",
             content_type,
             object_id,
-            field_name,
         )
     else:
         if output["state"] == "finished":
@@ -156,46 +164,51 @@ def get_video(content_type_id, object_id, field_name, data):
             # get preview pictures
             if output.get("thumbnails"):
                 for i, thumbnail in enumerate(output["thumbnails"][0]["images"]):
-                    filename, header = urlretrieve(thumbnail["url"])
+                    filename, __ = urlretrieve(thumbnail["url"])
                     thmb, __ = Thumbnail.objects.get_or_create(
                         content_type=content_type,
                         object_id=object_id,
                         time=i * settings.DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL,
+                        width=output["width"],
+                        height=output["height"],
                     )
                     thmb.image.save(basename(filename), File(open(filename, "rb")))
                     os.unlink(filename)
 
+            # we can't rely directly on the values from output, as these would define
+            # a new format for "(HD)" (full resolution) formats
+            video_codec, width, height = format_label_to_codec_width_height(
+                output["label"]
+            )
             fmt, __ = Format.objects.get_or_create(
                 content_type=content_type,
                 object_id=object_id,
                 field_name=field_name,
-                format=output["label"],
+                video_codec=video_codec,
+                width=width,
+                height=height,
             )
 
             response = open_url(output["url"])
+            headers = response.info()
             try:
                 # parse content-disposition header
-                filename = cgi.parse_header(response.info()["Content-Disposition"])[1][
-                    "filename"
-                ]
+                filename = parse_header(headers["Content-Disposition"])[1]["filename"]
             except (KeyError, TypeError):
-                filename = "format_%s.%s" % (
-                    datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
-                    response.info()["Content-Type"].rsplit("/", 1)[1],
-                )
-
-            # remove trailing parameters
-            filename = filename.split("?", 1)[0]
+                extension = headers["Content-Type"].rsplit("/", 1)[1]
+                datetime_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"format_{datetime_now}.{extension}"
+            else:
+                # remove trailing parameters
+                filename = filename.split("?", 1)[0]
 
             f = File(response)
-            f.size = response.info()["Content-Length"]
-
             fmt.width = output["width"]
             fmt.height = output["height"]
             fmt.duration = output["duration_in_ms"]
             fmt.extra_info = data
             fmt.file.save(basename(filename), f)
-            logger.info(u"File %s saved as %s", filename, fmt.file.name)
+            logger.info("File %s saved as %s", filename, fmt.file.name)
             signals.received_format.send(
                 sender=type(obj), instance=obj, format=fmt, result=data
             )

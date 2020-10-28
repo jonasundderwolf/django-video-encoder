@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.text import slugify
 
 from .api import encode
+from .utils import codec_width_height_to_format_label
 
 VIDEO_ENCODER_MODELS = {}
 
@@ -16,26 +17,47 @@ def format_upload_to(instance, filename):
     dirname, original_filename = os.path.split(
         getattr(instance.video, instance.field_name).name
     )
-    return "formats/%s/%s/%s%s" % (
-        instance.format,
-        dirname or ".",
-        slugify(os.path.splitext(original_filename)[0]),
-        os.path.splitext(filename)[1].lower(),
+    original_filename = slugify(os.path.splitext(original_filename)[0])
+    extension = os.path.splitext(filename)[1].lower()
+    return os.path.join(
+        "formats",
+        instance.format_label,
+        dirname,
+        f"{original_filename}{extension}",
     )
 
 
 class Format(models.Model):
+    H264 = "h264"
+    HEVC = "hevc"
+    JP2 = "jp2"
+    MPEG4 = "mpeg4"
+    THEORA = "theora"
+    VP6 = "vp6"
+    VP8 = "vp8"
+    VP9 = "vp9"
+    WMV = "wmv"
+    VIDEO_CODEC_CHOICES = [
+        (H264, H264),
+        (HEVC, HEVC),
+        (JP2, JP2),
+        (MPEG4, MPEG4),
+        (THEORA, THEORA),
+        (VP6, VP6),
+        (VP8, VP8),
+        (VP9, VP9),
+        (WMV, WMV),
+    ]
+
     object_id = models.PositiveIntegerField()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
 
     video = GenericForeignKey()
     field_name = models.CharField(max_length=255)
 
-    format = models.CharField(
-        max_length=255,
-        choices=[
-            (f["label"], f["label"]) for f in settings.DJANGO_VIDEO_ENCODER_FORMATS
-        ],
+    format_label = models.CharField(max_length=80, editable=False, default="")
+    video_codec = models.CharField(
+        max_length=50, choices=VIDEO_CODEC_CHOICES, default=H264
     )
     file = models.FileField(upload_to=format_upload_to, max_length=2048)
     width = models.PositiveIntegerField("Width", null=True)
@@ -44,11 +66,17 @@ class Format(models.Model):
 
     extra_info = models.TextField("Encoder information (JSON)", blank=True)
 
+    def save(self, **kwargs):
+        if not self.format_label:
+            self.format_label = codec_width_height_to_format_label(
+                self.video_codec, self.width, self.height
+            )
+        super().save(**kwargs)
+
 
 def thumbnail_upload_to(instance, filename):
-    return "footage/thumbnails/%s/%s.jpg" % (
-        instance.video.pk,
-        instance.time,
+    return os.path.join(
+        "footage", "thumbnails", str(instance.video.pk), f"{instance.time}.jpg"
     )
 
 
@@ -68,7 +96,7 @@ class Thumbnail(models.Model):
 
 def detect_file_changes(sender, instance, **kwargs):
     field_name = VIDEO_ENCODER_MODELS.get(
-        "%s.%s" % (sender._meta.app_label, sender._meta.model_name)
+        f"{sender._meta.app_label}.{sender._meta.model_name}"
     )
     if field_name:
         field = getattr(instance, field_name)
