@@ -1,5 +1,6 @@
 FULL_RESOLUTION = "full resolution"
 
+
 def format_label_to_codec_width_height(format_label):
     video_codec, resolution = format_label[:-1].rsplit(" (", 1)
     if resolution == FULL_RESOLUTION:

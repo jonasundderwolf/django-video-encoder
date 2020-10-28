@@ -18,10 +18,7 @@ from django.urls import reverse
 
 from . import signals
 from .errors import ZencoderError
-from .utils import (
-    codec_width_height_to_format_label,
-    format_label_to_codec_width_height,
-)
+from .utils import codec_width_height_to_format_label
 
 logger = logging.getLogger(__name__)
 

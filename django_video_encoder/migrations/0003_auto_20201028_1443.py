@@ -9,13 +9,17 @@ format_mapping = {
     "H.264": ("h264", False),
     "VP9 (HD)": ("vp9", True),
     "VP9": ("vp9", False),
+    "VP8 (HD)": ("vp8", True),
+    "VP8": ("vp8", False),
 }
 
 
 def update_formats(apps, schema_editor):
     Format = apps.get_model("django_video_encoder", "Format")
     for format in Format.objects.all():
-        format.video_codec, is_full_resolution = format_mapping.get(format.format, ("h264", False))
+        format.video_codec, is_full_resolution = format_mapping.get(
+            format.format, ("h264", False)
+        )
         resolution = (
             FULL_RESOLUTION if is_full_resolution else f"{format.width}x{format.height}"
         )
