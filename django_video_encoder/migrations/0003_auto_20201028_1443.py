@@ -2,20 +2,22 @@
 
 from django.db import migrations, models
 
+FULL_RESOLUTION = "full resolution"
+
 format_mapping = {
-    "H.264 (HD)": "h264",
-    "H.264": "h264",
-    "VP9 (HD)": "vp9",
-    "VP9": "vp9",
+    "H.264 (HD)": ("h264", True),
+    "H.264": ("h264", False),
+    "VP9 (HD)": ("vp9", True),
+    "VP9": ("vp9", False),
 }
 
 
 def update_formats(apps, schema_editor):
     Format = apps.get_model("django_video_encoder", "Format")
     for format in Format.objects.all():
-        format.video_codec = format_mapping.get(format.format, "h264")
+        format.video_codec, is_full_resolution = format_mapping.get(format.format, ("h264", False))
         resolution = (
-            f"{format.width}x{format.height}" if format.width or format.height else "HD"
+            FULL_RESOLUTION if is_full_resolution else f"{format.width}x{format.height}"
         )
         format.format_label = f"{format.video_codec} ({resolution})"
         format.save()

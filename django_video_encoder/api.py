@@ -175,18 +175,14 @@ def get_video(content_type_id, object_id, field_name, data):
                     thmb.image.save(basename(filename), File(open(filename, "rb")))
                     os.unlink(filename)
 
-            # we can't rely directly on the values from output, as these would define
-            # a new format for "(HD)" (full resolution) formats
-            video_codec, width, height = format_label_to_codec_width_height(
-                output["label"]
-            )
             fmt, __ = Format.objects.get_or_create(
+                format_label=output["label"],
                 content_type=content_type,
                 object_id=object_id,
                 field_name=field_name,
-                video_codec=video_codec,
-                width=width,
-                height=height,
+                video_codec=output["video_codec"],
+                width=output["width"],
+                height=output["height"],
             )
 
             response = open_url(output["url"])
