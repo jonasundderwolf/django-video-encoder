@@ -8,3 +8,4 @@ pytest-cov
 pytest-isort
 pytest-mock
 pytest-black
+pytest-flake8
