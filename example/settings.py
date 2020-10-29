@@ -35,9 +35,9 @@ INSTALLED_APPS = [
 ]
 
 DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL = 20
-DJANGO_VIDEO_ENCODER_FORMATS = [
-    {"video_codec": "h264"},
-    {"video_codec": "h264", "width": 720, "height": 404},
-    {"video_codec": "vp9"},
-    {"video_codec": "vp9", "width": 720, "height": 404},
-]
+DJANGO_VIDEO_ENCODER_FORMATS = {
+    "H264 (HD)": {"video_codec": "h264"},
+    "H264": {"video_codec": "h264", "width": 720, "height": 404},
+    "VP9 (HD)": {"video_codec": "vp9"},
+    "VP9": {"video_codec": "vp9", "width": 720, "height": 404},
+}

@@ -18,7 +18,6 @@ from django.urls import reverse
 
 from . import signals
 from .errors import ZencoderError
-from .utils import codec_width_height_to_format_label
 
 logger = logging.getLogger(__name__)
 
@@ -53,67 +52,63 @@ def send_request(data):
     return json.loads(response.read().decode("utf-8"))
 
 
-def encode(obj, field_name, file_url=None):
-    def absolute_url(url):
-        """
-        Helper to turn a domain-relative URL into an absolute one
-        with protocol and domain
-        """
-        if "://" in url:
-            return url
-        domain = Site.objects.get_current().domain
-        protocol = (
-            "https" if getattr(settings, "ZENCODER_NOTIFICATION_SSL", False) else "http"
-        )
-        base_url = f"{protocol}://{domain}"
-        return urljoin(base_url, url)
+def _absolute_url(url):
+    """
+    Helper to turn a domain-relative URL into an absolute one
+    with protocol and domain
+    """
+    if "://" in url:
+        return url
+    domain = Site.objects.get_current().domain
+    protocol = (
+        "https" if getattr(settings, "ZENCODER_NOTIFICATION_SSL", False) else "http"
+    )
+    base_url = f"{protocol}://{domain}"
+    return urljoin(base_url, url)
 
-    if not file_url:
-        file_url = getattr(obj, field_name).url
 
-    content_type = ContentType.objects.get_for_model(type(obj))
-
+def _get_encode_request_data(content_type_pk, field_name, file_url, obj_pk):
     color_metadata = "preserve"
     if getattr(settings, "ZENCODER_DISCARD_COLOR_METADATA", "preserve"):
         color_metadata = "discard"
-
     data = {
-        "obj": obj.pk,
-        "ct": content_type.pk,
+        "obj": obj_pk,
+        "ct": content_type_pk,
         "fld": field_name,
     }
     notification_url = (
-        f'{absolute_url(reverse("zencoder_notification"))}?{signing.dumps(data)}'
+        f'{_absolute_url(reverse("zencoder_notification"))}?{signing.dumps(data)}'
     )
     outputs = []
-    for fmt in settings.DJANGO_VIDEO_ENCODER_FORMATS:
-        format_label = codec_width_height_to_format_label(
-            fmt["video_codec"], fmt.get("width"), fmt.get("height")
-        )
-        outputs.append(
-            {
-                "label": format_label,
-                "video_codec": fmt["video_codec"],
-                "width": fmt.get("width"),
-                "height": fmt.get("height"),
-                "notifications": [notification_url],
-                "color_metadata": color_metadata,
-            }
-        )
-
+    for label, format_dict in settings.DJANGO_VIDEO_ENCODER_FORMATS.items():
+        output_dict = {
+            "label": label,
+            "notifications": [notification_url],
+            "color_metadata": color_metadata,
+        }
+        output_dict.update(**format_dict)
+        outputs.append(output_dict)
     data = {
-        "input": absolute_url(file_url),
+        "input": _absolute_url(file_url),
         "region": getattr(settings, "ZENCODER_REGION", "europe"),
         "output": outputs,
         "test": getattr(settings, "ZENCODER_INTEGRATION_MODE", False),
     }
-
     # get thumbnails for first output only
     data["output"][0]["thumbnails"] = {
         "interval": settings.DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL,
         "start_at_first_frame": True,
         "format": "jpg",
     }
+    return data
+
+
+def encode(obj, field_name, file_url=None):
+
+    if not file_url:
+        file_url = getattr(obj, field_name).url
+    content_type = ContentType.objects.get_for_model(type(obj))
+    data = _get_encode_request_data(content_type.pk, field_name, file_url, obj.pk)
 
     try:
         result = send_request(data)
@@ -153,6 +148,7 @@ def get_video(content_type_id, object_id, field_name, data):
             content_type,
             object_id,
         )
+        return
     else:
         if output["state"] == "finished":
 
@@ -180,6 +176,7 @@ def get_video(content_type_id, object_id, field_name, data):
                 video_codec=output["video_codec"],
                 width=output["width"],
                 height=output["height"],
+                duration=output["duration_in_ms"],
             )
 
             response = open_url(output["url"])

@@ -10,8 +10,7 @@ def check__formats(app_configs, **kwargs):
         return [checks.Error("No DJANGO_VIDEO_ENCODER_FORMATS defined in settings")]
     errors = []
     encoder_list = [format for format, __ in Format.VIDEO_CODEC_CHOICES]
-    formats_list = settings.DJANGO_VIDEO_ENCODER_FORMATS
-    for format in formats_list:
+    for format in settings.DJANGO_VIDEO_ENCODER_FORMATS.values():
         if "video_codec" not in format:
             errors.append(
                 checks.Error(f"Format dict {format} has no defined `video_codec`")
@@ -24,13 +23,3 @@ def check__formats(app_configs, **kwargs):
                     f"{encoder_list}"
                 )
             )
-    duplicates = [
-        format for n, format in enumerate(formats_list) if format in formats_list[:n]
-    ]
-    for duplicate in duplicates:
-        errors.append(
-            checks.Error(
-                f"Format dict {duplicate} is duplicated in "
-                f"settings.DJANGO_VIDEO_ENCODER_FORMATS"
-            )
-        )

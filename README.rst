@@ -39,17 +39,24 @@ You will need to add the following to your django settings:
 * Set the `DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL`
 * Add the desired formats, for example ::
 
-    DJANGO_VIDEO_ENCODER_FORMATS = [
-        {'codec': 'h264'},  # full resolution if not specified
-        {'codec': 'h264', 'width': 720, 'height': 404},
-        {'codec': 'vp9'},  # full resolution if not specified
-        {'codec': 'vp9', 'width': 720, 'height': 404},
-    ]
+    DJANGO_VIDEO_ENCODER_FORMATS = {
+        "H264 (HD)": {"video_codec": "h264"},  # full resolution if not specified
+        "H264": {"video_codec": "h264", "width": 720, "height": 404},
+        "VP9 (HD)": {"video_codec": "vp9"},
+        "VP9": {"video_codec": "vp9", "width": 720, "height": 404},
+    }
 
 And specific settings using the zencoder backend:
 
 * Add `ZENCODER_API_KEY` and `ZENCODER_NOTIFICATION_SECRET`
 * You may also specify `ZENCODER_REGION` (default: europe) to the most suitable for you
+
+`DJANGO_VIDEO_ENCODER_FORMATS` is a dictionary of
+`{format_label: format_kwargs}` where `format_kwargs` is a
+dictionary requiring `video_codec` and where all arguments are
+added to the encoding job POST. You can define width, height and
+much more see the
+`Zencoder API <https://zencoder.support.brightcove.com/references/reference.html#operation/createJob>`_.
 
 Tests
 =====

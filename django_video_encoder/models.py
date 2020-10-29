@@ -8,7 +8,6 @@ from django.db import models
 from django.utils.text import slugify
 
 from .api import encode
-from .utils import codec_width_height_to_format_label
 
 VIDEO_ENCODER_MODELS = {}
 
@@ -65,13 +64,6 @@ class Format(models.Model):
     duration = models.PositiveIntegerField("Duration (ms)", null=True)
 
     extra_info = models.TextField("Encoder information (JSON)", blank=True)
-
-    def save(self, **kwargs):
-        if not self.format_label:
-            self.format_label = codec_width_height_to_format_label(
-                self.video_codec, self.width, self.height
-            )
-        super().save(**kwargs)
 
 
 def thumbnail_upload_to(instance, filename):
