@@ -23,3 +23,4 @@ def check__formats(app_configs, **kwargs):
                     f"{encoder_list}"
                 )
             )
+    return errors
