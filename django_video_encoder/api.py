@@ -76,14 +76,16 @@ def _get_encode_request_data(content_type_pk, field_name, file_url, obj_pk):
         "ct": content_type_pk,
         "fld": field_name,
     }
-    notification_url = (
-        f'{_absolute_url(reverse("zencoder_notification"))}?{signing.dumps(data)}'
+    headers = getattr(settings, "DJANGO_VIDEO_ENCODER_NOTIFICATIONS_HEADERS", {})
+    notifications = dict(
+        url=f'{_absolute_url(reverse("zencoder_notification"))}?{signing.dumps(data)}',
+        headers=headers,
     )
     outputs = []
     for label, format_dict in settings.DJANGO_VIDEO_ENCODER_FORMATS.items():
         output_dict = {
             "label": label,
-            "notifications": [notification_url],
+            "notifications": notifications,
             "color_metadata": color_metadata,
         }
         output_dict.update(**format_dict)
