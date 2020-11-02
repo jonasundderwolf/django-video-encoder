@@ -1,10 +1,10 @@
-import cgi
 import datetime
 import json
 import logging
 import os
 from os.path import basename
 from urllib.error import URLError
+from urllib.parse import urljoin
 from urllib.request import Request, urlopen, urlretrieve
 
 from django.conf import settings
@@ -13,6 +13,7 @@ from django.contrib.sites.models import Site
 from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
+from django.http.multipartparser import parse_header
 from django.urls import reverse
 
 from . import signals
@@ -51,63 +52,63 @@ def send_request(data):
     return json.loads(response.read().decode("utf-8"))
 
 
-def encode(obj, field_name, file_url=None):
-    def absolute_url(url):
-        """
-        Helper to turn a domain-relative URL into an absolute one
-        with protocol and domain
-        """
-        domain = Site.objects.get_current().domain
-        protocol = (
-            "https" if getattr(settings, "ZENCODER_NOTIFICATION_SSL", False) else "http"
-        )
-        return url if "://" in url else "%s://%s%s" % (protocol, domain, url)
+def _absolute_url(url):
+    """
+    Helper to turn a domain-relative URL into an absolute one
+    with protocol and domain
+    """
+    if "://" in url:
+        return url
+    domain = Site.objects.get_current().domain
+    protocol = (
+        "https" if getattr(settings, "ZENCODER_NOTIFICATION_SSL", False) else "http"
+    )
+    base_url = f"{protocol}://{domain}"
+    return urljoin(base_url, url)
 
-    if not file_url:
-        file_url = getattr(obj, field_name).url
 
-    content_type = ContentType.objects.get_for_model(type(obj))
-
+def _get_encode_request_data(content_type_pk, field_name, file_url, obj_pk):
     color_metadata = "preserve"
     if getattr(settings, "ZENCODER_DISCARD_COLOR_METADATA", "preserve"):
         color_metadata = "discard"
-
-    outputs = []
-    for fmt in settings.DJANGO_VIDEO_ENCODER_FORMATS:
-        data = {
-            "obj": obj.pk,
-            "ct": content_type.pk,
-            "fld": field_name,
-        }
-        notification_url = "%s?%s" % (
-            absolute_url(reverse("zencoder_notification")),
-            signing.dumps(data),
-        )
-
-        outputs.append(
-            {
-                "label": fmt["label"],
-                "video_codec": fmt["codec"],
-                "width": fmt.get("width"),
-                "height": fmt.get("height"),
-                "notifications": [notification_url],
-                "color_metadata": color_metadata,
-            }
-        )
-
     data = {
-        "input": absolute_url(file_url),
+        "obj": obj_pk,
+        "ct": content_type_pk,
+        "fld": field_name,
+    }
+    notification_url = (
+        f'{_absolute_url(reverse("zencoder_notification"))}?{signing.dumps(data)}'
+    )
+    outputs = []
+    for label, format_dict in settings.DJANGO_VIDEO_ENCODER_FORMATS.items():
+        output_dict = {
+            "label": label,
+            "notifications": [notification_url],
+            "color_metadata": color_metadata,
+        }
+        output_dict.update(**format_dict)
+        outputs.append(output_dict)
+    data = {
+        "input": _absolute_url(file_url),
         "region": getattr(settings, "ZENCODER_REGION", "europe"),
         "output": outputs,
         "test": getattr(settings, "ZENCODER_INTEGRATION_MODE", False),
     }
-
     # get thumbnails for first output only
     data["output"][0]["thumbnails"] = {
         "interval": settings.DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL,
-        "start_at_first_frame": 1,
+        "start_at_first_frame": True,
         "format": "jpg",
     }
+    return data
+
+
+def encode(obj, field_name, file_url=None):
+
+    if not file_url:
+        file_url = getattr(obj, field_name).url
+    content_type = ContentType.objects.get_for_model(type(obj))
+    data = _get_encode_request_data(content_type.pk, field_name, file_url, obj.pk)
 
     try:
         result = send_request(data)
@@ -143,11 +144,11 @@ def get_video(content_type_id, object_id, field_name, data):
         obj = content_type.get_object_for_this_type(pk=object_id)
     except ObjectDoesNotExist:
         logger.warning(
-            "The model %s/%s has been removed after being sent to Zencoder",
+            "The object %s/%s has been removed after being sent to Zencoder",
             content_type,
             object_id,
-            field_name,
         )
+        return
     else:
         if output["state"] == "finished":
 
@@ -156,46 +157,48 @@ def get_video(content_type_id, object_id, field_name, data):
             # get preview pictures
             if output.get("thumbnails"):
                 for i, thumbnail in enumerate(output["thumbnails"][0]["images"]):
-                    filename, header = urlretrieve(thumbnail["url"])
+                    filename, __ = urlretrieve(thumbnail["url"])
                     thmb, __ = Thumbnail.objects.get_or_create(
                         content_type=content_type,
                         object_id=object_id,
                         time=i * settings.DJANGO_VIDEO_ENCODER_THUMBNAIL_INTERVAL,
+                        width=output["width"],
+                        height=output["height"],
                     )
                     thmb.image.save(basename(filename), File(open(filename, "rb")))
                     os.unlink(filename)
 
             fmt, __ = Format.objects.get_or_create(
+                format_label=output["label"],
                 content_type=content_type,
                 object_id=object_id,
                 field_name=field_name,
-                format=output["label"],
+                video_codec=output["video_codec"],
+                width=output["width"],
+                height=output["height"],
+                duration=output["duration_in_ms"],
             )
 
             response = open_url(output["url"])
+            headers = response.info()
             try:
                 # parse content-disposition header
-                filename = cgi.parse_header(response.info()["Content-Disposition"])[1][
-                    "filename"
-                ]
+                filename = parse_header(headers["Content-Disposition"])[1]["filename"]
             except (KeyError, TypeError):
-                filename = "format_%s.%s" % (
-                    datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
-                    response.info()["Content-Type"].rsplit("/", 1)[1],
-                )
-
-            # remove trailing parameters
-            filename = filename.split("?", 1)[0]
+                extension = headers["Content-Type"].rsplit("/", 1)[1]
+                datetime_now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"format_{datetime_now}.{extension}"
+            else:
+                # remove trailing parameters
+                filename = filename.split("?", 1)[0]
 
             f = File(response)
-            f.size = response.info()["Content-Length"]
-
             fmt.width = output["width"]
             fmt.height = output["height"]
             fmt.duration = output["duration_in_ms"]
             fmt.extra_info = data
             fmt.file.save(basename(filename), f)
-            logger.info(u"File %s saved as %s", filename, fmt.file.name)
+            logger.info("File %s saved as %s", filename, fmt.file.name)
             signals.received_format.send(
                 sender=type(obj), instance=obj, format=fmt, result=data
             )

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="django_video_encoder",
-    description="Simple integration of a Django model with a FileField to encoding backends",
+    description="Simple integration of a Django model with a FileField to encoding backends",  # NoQA: E501
     long_description=open("README.rst").read(),
     author="Jonas und der Wolf GmbH",
     author_email="opensource@jonasundderwolf.de",
@@ -24,5 +24,6 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
 )
